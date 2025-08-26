@@ -6,7 +6,7 @@ On Mac:
 - Install homebrew
 - Install gcc and pkgconf
 
-- Install CMakeLists.txt, main.cpp, sample.bmp into ByteRacers directory
+- Install CMakeLists.txt, main.cpp, sample.bmp into ByteRacers directory using: % git clone https://github.com/willcurt/ByteRacers.git
 
 In terminal:
 - Compile and create executable using: % gcc main.cpp -o prog `pkg-config --libs sdl3`
