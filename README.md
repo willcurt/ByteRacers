@@ -1,7 +1,7 @@
 # ByteRacers
 A 2D maze-racing game made using SDL3, C++, CMake
 
-**On Mac:**
+**macOS & UNIX:**
 - Install SDL3 on system
 
 Suggestions:
@@ -11,6 +11,7 @@ Suggestions:
 - Download CMakeLists.txt, main.cpp, assets, build.sh into ByteRacers directory using: % `git clone https://github.com/willcurt/ByteRacers.git`
 
 - Edit build.sh script with sdl3 path:
+- In terminal: run %`brew --prefix sdl3`
 - 'cmake .. -DSDL3_DIR=$(brew --prefix sdl3)/lib/cmake/SDL3'
 
 In terminal:
