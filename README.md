@@ -12,7 +12,7 @@ Suggestions:
 
 - Edit build.sh script with sdl3 path:
 - In terminal: run %`brew --prefix sdl3`
-- 'cmake .. -DSDL3_DIR=$(brew --prefix sdl3)/lib/cmake/SDL3'
+- `cmake .. -DSDL3_DIR=$(brew --prefix sdl3)/lib/cmake/SDL3`
 
 In terminal:
 - Run: % `chmod +x build.sh`
