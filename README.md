@@ -2,19 +2,18 @@
 A 2D maze-racing game made using SDL3, C++, CMake
 
 **macOS & UNIX:**
-- Install SDL3 on system
-
 - Install homebrew
-- May need gcc and pkgconf
+- Install SDL3 on system
 
 - Download CMakeLists.txt, main.cpp, assets, build.sh into ByteRacers directory using: % `git clone https://github.com/willcurt/ByteRacers.git`
 
-- Edit build.sh script with sdl3 path:
-- In terminal: run %`brew --prefix sdl3`
-- `cmake .. -DSDL3_DIR=$(brew --prefix sdl3)/lib/cmake/SDL3`
-
 In terminal:
-- Run: % `chmod +x build.sh`
-- Run: % `./build.sh`
+- % `chmod +x build.sh`
+- Run: % `RUN_AFTER_BUILD=1 ./build.sh`
+    - Overrides (example):
+      % `RUN_AFTER_BUILD=1 \
+      SDL3_DIR=/usr/local/opt/sdl3/lib/cmake/SDL3 \
+      SDL3_image_DIR=/usr/local/opt/sdl3_image/lib/cmake/SDL3_image \
+      ./build.sh`
 
-Just running: % `./build.sh` from now on will build and run the project (should compile, create executable, and run executable per native resources)
+
