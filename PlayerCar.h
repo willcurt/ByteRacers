@@ -1,21 +1,34 @@
 #pragma once
+#include <algorithm>
+#include <cmath>
 
 class Player {
 private:
-    int x, y;      // position in the maze
-    int speed;     // how many units the player moves per step
+    float x, y;            // position
+    float velX, velY;      // velocity
+    float acceleration;    // acceleration rate
+    float friction;        // natural slowing
+    float maxSpeed;        // maximum speed
 
 public:
     // Constructor
-    Player(int startX = 0, int startY = 0);
+    Player(float startX = 0, float startY = 0);
 
-    // Movement
+    // Update loop
+    void update();
+
+    // Movement controls
     void moveUp();
     void moveDown();
     void moveLeft();
     void moveRight();
 
     // Getters
-    int getX() const;
-    int getY() const;
+    float getX() const;
+    float getY() const;
+    float getVelX() const;
+    float getVelY() const;
+
+private:
+    void clampSpeed();
 };
