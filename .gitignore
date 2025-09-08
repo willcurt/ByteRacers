@@ -1,0 +1,8 @@
+/build/
+/cmake-build-debug/
+/.idea/
+
+*.exe
+*.dll
+*.pdb
+*.lib
