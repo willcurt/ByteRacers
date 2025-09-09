@@ -8,7 +8,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_modules)
 find_package(SDL3 CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 
-add_executable(ByteRacers main.cpp)
+add_executable(ByteRacers main.cpp
+                          Player.cpp
+                          Player.h)
 
 target_link_libraries(ByteRacers PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
 
