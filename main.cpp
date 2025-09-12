@@ -1,176 +1,149 @@
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
+#include <cstdio>
+#include <algorithm>
 #include <cmath>
-
+#include "Player.h"
 
 struct SDLState {
-    SDL_Window *window;
-    SDL_Renderer *renderer;
-    int width, height, logW, logH;
+    SDL_Window*   window{};
+    SDL_Renderer* renderer{};
+    int           winW{1280}, winH{720};
+    int           logicalW{0}, logicalH{0};
 };
 
-
-bool initialize(SDLState &state);
-void cleanup(SDLState &state);
-
-int main(int argc, char *argv[])
-{
-    SDLState state;
-    state.width = 1600;
-    state.height = 900;
-    state.logW = 640;
-    state.logH = 320;
-
-    SDL_Surface *image;
-    SDL_Texture *texture;
-
-    if (!initialize(state)) {
-        return 3;
-    }
-
-    // load game assets
-    image = IMG_Load("assets/idle.png");
-    if (!image) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create surface from image: %s", SDL_GetError());
-
-        return 3;
-    }
-
-    // create texture for assets
-    texture = SDL_CreateTextureFromSurface(state.renderer, image);
-    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
-    if (!texture) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture from surface: %s", SDL_GetError());
-        return 3;
-    }
-
-    // setup game data
-    const bool *keys = SDL_GetKeyboardState(NULL);
-    float playerX = 0;
-    float playerY = 0;
-    uint64_t prevTime = SDL_GetTicks();
-
-
-    // game loop
-    bool running = true;
-    while (running) {
-        uint64_t nowTime = SDL_GetTicks();
-        float deltaTime = (nowTime - prevTime) / 1000.0f; //converts to sec
-        SDL_Event event{0};
-        while (SDL_PollEvent(&event))
-            switch (event.type) {
-                case SDL_EVENT_QUIT: {
-                    running = false;
-                    break;
-                }
-                case SDL_EVENT_WINDOW_RESIZED: {
-                    state.width = event.window.data1;
-                    state.height = event.window.data2;
-                    break;
-                }
-            }
-
-        // handle movement input
-        float moveAmountX = 0;
-        float moveAmountY = 0;
-        if (keys[SDL_SCANCODE_A]) {
-            moveAmountX += -75.0f;
-        }
-        if (keys[SDL_SCANCODE_D]) {
-            moveAmountX += 75.0f;
-        }
-        if (keys[SDL_SCANCODE_W]) {
-            moveAmountY += -75.0f;
-        }
-        if (keys[SDL_SCANCODE_S]) {
-            moveAmountY += 75.0f;
-        }
-        playerX += moveAmountX * deltaTime;
-        playerY += moveAmountY * deltaTime;
-
-
-        // perform drawing commands
-        SDL_SetRenderDrawColor(state.renderer, 0x00, 0x00, 0x00, 0x00);
-        SDL_RenderClear(state.renderer);
-
-        const float spriteSize = 32;
-        SDL_FRect src{
-            .x = 0,
-            .y = 0,
-            .w = spriteSize,
-            .h = spriteSize
-        };
-
-        SDL_FRect dst{
-            .x = playerX,
-            .y = playerY,
-            .w = spriteSize,
-            .h = spriteSize
-        };
-
-        SDL_RenderTexture(state.renderer, texture, &src, &dst);
-
-
-        // swap buffers and present
-        SDL_RenderPresent(state.renderer);
-        prevTime = nowTime;
-    }
-
-    SDL_DestroySurface(image);
-    SDL_DestroyTexture(texture);
-    cleanup(state);
-    return 0;
-}
-
-bool initialize(SDLState &state) {
-
-    bool initSuccess = true;
-
+static bool init(SDLState& s) {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s", SDL_GetError());
-        initSuccess = false;
+        std::fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
+        return false;
     }
 
-    const int compiled = SDL_VERSION; /* hardcoded number from SDL headers */
-    const int linked = SDL_GetVersion(); /* reported by linked SDL library */
-
-    SDL_Log("We compiled against SDL version %d,%d,%d ...\n",
-         SDL_VERSIONNUM_MAJOR(compiled),
-         SDL_VERSIONNUM_MINOR(compiled),
-         SDL_VERSIONNUM_MICRO(compiled));
-
-    SDL_Log("But we are linking against SDL version %d,%d,%d,\n",
-         SDL_VERSIONNUM_MAJOR(linked),
-         SDL_VERSIONNUM_MINOR(linked),
-         SDL_VERSIONNUM_MICRO(linked));
-
-
-    // create window
-    state.window = SDL_CreateWindow("Byte Racers", state.width, state.height, SDL_WINDOW_RESIZABLE);
-    if (!state.window) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s", SDL_GetError());
-        cleanup(state);
-        initSuccess = false;
+    s.window = SDL_CreateWindow("Byte Racers", s.winW, s.winH, SDL_WINDOW_RESIZABLE);
+    if (!s.window) {
+        std::fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
+        return false;
     }
 
-    // create renderer
-    state.renderer = SDL_CreateRenderer(state.window, NULL);
-    if (!state.renderer) {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create renderer: %s", SDL_GetError());
-        cleanup(state);
-        initSuccess = false;
+    // renderer selection; NULL chooses default
+    s.renderer = SDL_CreateRenderer(s.window, NULL);
+    if (!s.renderer) {
+        std::fprintf(stderr, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
+        return false;
     }
 
-    // config presentation
-    SDL_SetRenderLogicalPresentation(state.renderer, state.logW, state.logH, SDL_LOGICAL_PRESENTATION_LETTERBOX);
-
-    return initSuccess;
+    // logical presentation
+    if (s.logicalW > 0 && s.logicalH > 0) {
+        SDL_SetRenderLogicalPresentation(s.renderer, s.logicalW, s.logicalH, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    }
+    return true;
 }
 
-void cleanup(SDLState &state) {
-    SDL_DestroyRenderer(state.renderer);
-    SDL_DestroyWindow(state.window);
+static void shutdown(SDLState& s) {
+    if (s.renderer) SDL_DestroyRenderer(s.renderer);
+    if (s.window)   SDL_DestroyWindow(s.window);
     SDL_Quit();
+}
 
+// tries assets/idle.png, else generates a placeholder via Player::render()
+static SDL_Texture* loadCarTexture(SDL_Renderer* ren) {
+    SDL_Texture* tex = IMG_LoadTexture(ren, "assets/idle.png");
+    if (tex) SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
+    return tex;
+}
+
+int main(int, char**) {
+    SDLState s;
+
+    if (!init(s)) { shutdown(s); return 1; }
+
+    // load car sprite (PNG w/ transparent background, oriented “up”)
+    SDL_Texture* carTex = loadCarTexture(s.renderer);
+
+    // create  Player in the middle of the current render size
+    int rw = s.winW, rh = s.winH;
+    if (s.logicalW > 0 && s.logicalH > 0) { rw = s.logicalW; rh = s.logicalH; }
+    Player car(float(rw) * 0.5f, float(rh) * 0.5f, -90.f);
+
+    // timing   high res
+    Uint64 now = SDL_GetPerformanceCounter();
+    const auto freq = (double)SDL_GetPerformanceFrequency();
+
+    // steering keys    rate-limited
+    bool steerLeft = false, steerRight = false;
+    bool running = true;
+
+    while (running) {
+        // events
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_EVENT_QUIT) {
+                running = false;
+            } else if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+                s.winW = e.window.data1;
+                s.winH = e.window.data2;
+            } else if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat) {
+                if (e.key.key == SDLK_ESCAPE) running = false;
+                if (e.key.key == SDLK_LEFT)  steerLeft  = true;
+                if (e.key.key == SDLK_RIGHT) steerRight = true;
+                if (e.key.key == SDLK_R) { // reset to center
+                    int rw2 = s.winW, rh2 = s.winH;
+                    if (s.logicalW > 0 && s.logicalH > 0) { rw2 = s.logicalW; rh2 = s.logicalH; }
+                    car = Player(float(rw2) * 0.5f, float(rh2) * 0.5f, -90.f);
+                }
+            } else if (e.type == SDL_EVENT_KEY_UP && !e.key.repeat) {
+                if (e.key.key == SDLK_LEFT)  steerLeft  = false;
+                if (e.key.key == SDLK_RIGHT) steerRight = false;
+            }
+        }
+
+        // input    continuous
+        const bool* ks = SDL_GetKeyboardState(NULL);
+        float throttle = 0.f;
+        if (ks[SDL_SCANCODE_UP])   throttle += 1.f;
+        if (ks[SDL_SCANCODE_DOWN]) throttle -= 1.f;
+
+        float brake = ks[SDL_SCANCODE_SPACE] ? 1.f : 0.f;
+
+        float steerIn = 0.f;
+        if (steerLeft)  steerIn -= 1.f;
+        if (steerRight) steerIn += 1.f;
+
+        // timing
+        Uint64 newNow = SDL_GetPerformanceCounter();
+        auto dt = float((double)(newNow - now) / freq);
+        now = newNow;
+        if (dt > 1.f/30.f) dt = 1.f/30.f; // clamp spikes
+
+        // update
+        car.setInputs(throttle, brake, steerIn);
+        car.update(dt);
+
+        // temp simple bounds in current render space
+        int curW = s.winW, curH = s.winH;
+        if (s.logicalW > 0 && s.logicalH > 0) { curW = s.logicalW; curH = s.logicalH; }
+        if (car.x() < 0)            car.setPosition(0, car.y());
+        if (car.y() < 0)            car.setPosition(car.x(), 0);
+        if (car.x() > curW)         car.setPosition(float(curW), car.y());
+        if (car.y() > curH)         car.setPosition(car.x(), float(curH));
+
+        // render
+        SDL_SetRenderDrawColor(s.renderer, 24, 28, 32, 255);
+        SDL_RenderClear(s.renderer);
+
+        car.render(s.renderer, carTex);
+
+        // simple velocity bar
+        float spd = std::abs(car.speed());
+        SDL_FRect hud { 20.f, float(curH) - 28.f, std::min(spd / 1200.f, 1.f) * 300.f, 8.f };
+        SDL_SetRenderDrawColor(s.renderer, 0, 200, 120, 255);
+        SDL_RenderFillRect(s.renderer, &hud);
+
+        SDL_RenderPresent(s.renderer);
+
+        SDL_Delay(1);
+    }
+
+    if (carTex) SDL_DestroyTexture(carTex);
+    shutdown(s);
+    return 0;
 }
