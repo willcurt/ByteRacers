@@ -10,7 +10,13 @@ find_package(SDL3_image CONFIG REQUIRED)
 
 add_executable(ByteRacers main.cpp
                           Player.cpp
-                          Player.h)
+                          Player.h
+                          EnemyCar.cpp
+                          EnemyCar.h
+                          Game.cpp
+                          Game.h
+                          Map.cpp
+                          Map.h)
 
 target_link_libraries(ByteRacers PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
 

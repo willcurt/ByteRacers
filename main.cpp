@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include "Player.h"
+#include "Map.h"
 
 struct SDLState {
     SDL_Window*   window{};
@@ -11,6 +12,9 @@ struct SDLState {
     int           winW{1280}, winH{720};
     int           logicalW{0}, logicalH{0};
 };
+
+// Set tile size
+static const int TILE = 16;
 
 static bool init(SDLState& s) {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -63,6 +67,14 @@ int main(int, char**) {
     int rw = s.winW, rh = s.winH;
     if (s.logicalW > 0 && s.logicalH > 0) { rw = s.logicalW; rh = s.logicalH; }
     Player car(float(rw) * 0.5f, float(rh) * 0.5f, -90.f);
+
+    // Create and load a basic map
+    Map map;
+    std::string mapErr;
+    if (!map.loadFromFile("levels/level1.txt", TILE, &mapErr))
+    {
+        // Empty for now
+    }
 
     // timing   high res
     Uint64 now = SDL_GetPerformanceCounter();
@@ -129,6 +141,8 @@ int main(int, char**) {
         // render
         SDL_SetRenderDrawColor(s.renderer, 24, 28, 32, 255);
         SDL_RenderClear(s.renderer);
+
+        map.render(s.renderer);
 
         car.render(s.renderer, carTex);
 
