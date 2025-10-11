@@ -81,7 +81,7 @@ void Map::render(SDL_Renderer* r) const
     const int endCol = std::min(cols_ - 1, (w + tile_ - 1) / tile_);
     const int endRow = std::min(rows_ - 1, (h + tile_ - 1) / tile_);
 
-    SDL_SetRenderDrawColor(r, 200, 200, 200, 255);
+    SDL_SetRenderDrawColor(r, 0, 255, 0, 255);
     for (int y = 0; y <= endRow; ++y)
     {
         for (int x = 0; x <= endCol; ++x)
@@ -89,7 +89,14 @@ void Map::render(SDL_Renderer* r) const
             if (at(y, x) == 1)
             {
                 SDL_FRect fr{ float(x * tile_), float(y * tile_), float(tile_), float(tile_) };
+
+                // Fill green
+                SDL_SetRenderDrawColor(r, 0, 255, 0, 255);
                 SDL_RenderFillRect(r, &fr);
+
+                // Draw border orange
+                SDL_SetRenderDrawColor(r, 255, 165, 0, 255);
+                SDL_RenderRect(r, &fr);
             }
         }
     }
@@ -99,7 +106,7 @@ bool Map::isWallAtPixel(float px, float py) const
 {
     const int cx = int(std::floor(px / tile_));
     const int cy = int(std::floor(py / tile_));
-    if (!inBounds(cy, cx)) return true; // outside map treated as solid
+    if (!inBounds(cy, cx)) return true;
     return at(cy, cx) == 1;
 }
 

@@ -14,7 +14,7 @@ struct SDLState {
 };
 
 // Set tile size
-static const int TILE = 16;
+static const int TILE = 32;
 
 static bool init(SDLState& s) {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -128,7 +128,7 @@ int main(int, char**) {
 
         // update
         car.setInputs(throttle, brake, steerIn);
-        car.update(dt);
+        car.update(dt, map, TILE);
 
         // temp simple bounds in current render space
         int curW = s.winW, curH = s.winH;

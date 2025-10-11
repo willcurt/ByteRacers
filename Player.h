@@ -4,6 +4,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include <algorithm>
+#include "Map.h"
 
 
 class Player {
@@ -13,7 +14,7 @@ public:
 
     // inputs each frame: throttle [-1,1], brake [0,1], steer [-1,1] (L..R)
     void setInputs(float throttle, float brake, float steer);
-    void update(float dtSeconds);
+    void update(float dtSeconds, Map &map, int tileSize);
 
     // render the car rotated to its physical heading. ff tex == NULL, draws a placeholder.
     void render(SDL_Renderer* ren, SDL_Texture* tex);
@@ -60,7 +61,5 @@ private:
     static float clampf(float v, float lo, float hi);
     static float sgnf(float v);
 };
-
-
 
 #endif //PLAYER_H
