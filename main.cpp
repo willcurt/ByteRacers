@@ -5,6 +5,7 @@
 #include <cmath>
 #include "Player.h"
 #include "Map.h"
+#include "Camera.h"
 
 struct SDLState {
     SDL_Window*   window{};
@@ -71,9 +72,16 @@ int main(int, char**) {
     // Create and load a basic map
     Map map;
     std::string mapErr;
-    if (!map.loadFromFile("levels/level1.txt", TILE, &mapErr))
+    if (!map.loadFromFile("levels/levels_camera_test.txt", TILE, &mapErr))
     {
         // Empty for now
+    }
+
+    Camera camera;
+    {
+        int outW=0, outH=0;
+        SDL_GetRenderOutputSize(s.renderer, &outW, &outH);
+        camera.setViewport((float)outW, (float)outH);
     }
 
     // timing   high res
@@ -93,6 +101,7 @@ int main(int, char**) {
             } else if (e.type == SDL_EVENT_WINDOW_RESIZED) {
                 s.winW = e.window.data1;
                 s.winH = e.window.data2;
+                camera.setViewport((float)s.winW, (float)s.winH);
             } else if (e.type == SDL_EVENT_KEY_DOWN && !e.key.repeat) {
                 if (e.key.key == SDLK_ESCAPE) running = false;
                 if (e.key.key == SDLK_LEFT)  steerLeft  = true;
@@ -133,21 +142,23 @@ int main(int, char**) {
         // temp simple bounds in current render space
         int curW = s.winW, curH = s.winH;
         if (s.logicalW > 0 && s.logicalH > 0) { curW = s.logicalW; curH = s.logicalH; }
-        if (car.x() < 0)            car.setPosition(0, car.y());
-        if (car.y() < 0)            car.setPosition(car.x(), 0);
-        if (car.x() > curW)         car.setPosition(float(curW), car.y());
-        if (car.y() > curH)         car.setPosition(car.x(), float(curH));
+
+        // Follow player (world size from map)
+        const float worldW = (float)map.worldPixelWidth();
+        const float worldH = (float)map.worldPixelHeight();
+        camera.follow(car.x(), car.y(), worldW, worldH);
 
         // render
         SDL_SetRenderDrawColor(s.renderer, 24, 28, 32, 255);
         SDL_RenderClear(s.renderer);
 
-        map.render(s.renderer);
-
-        car.render(s.renderer, carTex);
+        map.render(s.renderer, camera);            // only visible tiles, offset by camera
+        car.render(s.renderer, carTex, camera);    // draw player relative to camera
 
         // simple velocity bar
         float spd = std::abs(car.speed());
+        curW = s.winW, curH = s.winH;
+        if (s.logicalW > 0 && s.logicalH > 0) { curW = s.logicalW; curH = s.logicalH; }
         SDL_FRect hud { 20.f, float(curH) - 28.f, std::min(spd / 1200.f, 1.f) * 300.f, 8.f };
         SDL_SetRenderDrawColor(s.renderer, 0, 200, 120, 255);
         SDL_RenderFillRect(s.renderer, &hud);

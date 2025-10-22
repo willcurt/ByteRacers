@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "Camera.h"
 #include <algorithm>
 #include <cmath>
 
@@ -113,6 +114,35 @@ void Player::render(SDL_Renderer* ren, SDL_Texture* tex) {
     SDL_FRect dst { x_ - (texW_ * scale) * 0.5f,
                     y_ - (texH_ * scale) * 0.5f,
                     texW_ * scale, texH_ * scale };
+    SDL_FPoint center { dst.w * 0.5f, dst.h * 0.5f };
+
+    if (tex) {
+        SDL_RenderTextureRotated(ren, tex, nullptr, &dst, double(heading_), &center, SDL_FLIP_NONE);
+    } else {
+        SDL_SetRenderDrawColor(ren, 30, 140, 230, 255);
+        SDL_RenderFillRect(ren, &dst);
+    }
+}
+
+void Player::render(SDL_Renderer* ren, SDL_Texture* tex, const Camera& cam) {
+    // Texture size cache
+    if (tex && !haveSize_) {
+        float w = 0.f, h = 0.f;
+        SDL_GetTextureSize(tex, &w, &h);
+        if (w > 0.f && h > 0.f) {
+            texW_ = w;
+            texH_ = h;
+        }
+        haveSize_ = true;
+    }
+
+    const float scale = 1.0f;
+    SDL_FRect dst {
+        (x_ - cam.view.x) - (texW_ * scale) * 0.5f,
+        (y_ - cam.view.y) - (texH_ * scale) * 0.5f,
+        texW_ * scale,
+        texH_ * scale
+    };
     SDL_FPoint center { dst.w * 0.5f, dst.h * 0.5f };
 
     if (tex) {

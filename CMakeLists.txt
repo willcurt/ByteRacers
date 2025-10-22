@@ -1,36 +1,65 @@
-cmake_minimum_required(VERSION 3.31)
-project(ByteRacers LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.16)
+project(sdl-min LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake_modules)
+# Output dirs
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE INTERNAL "")
 
-find_package(SDL3 CONFIG REQUIRED)
-find_package(SDL3_image CONFIG REQUIRED)
+# Compile targets
+add_executable(${PROJECT_NAME}
+        main.cpp
+        Player.cpp
+        EnemyCar.cpp
+        Game.cpp
+        Map.cpp
+        Camera.h
+)
 
-add_executable(ByteRacers main.cpp
-                          Player.cpp
-                          Player.h
-                          EnemyCar.cpp
-                          EnemyCar.h
-                          Game.cpp
-                          Game.h
-                          Map.cpp
-                          Map.h)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
-target_link_libraries(ByteRacers PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
+# Create SDL as target
+add_subdirectory(SDL EXCLUDE_FROM_ALL)
 
-set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/assets")
+# Creat SDL_image as target
+set(SDLIMAGE_VENDORED ON)
+set(SDLIMAGE_AVIF OFF)
+set(SDLIMAGE_BMP  OFF)
+set(SDLIMAGE_JPEG OFF)
+set(SDLIMAGE_WEBP OFF)
+add_subdirectory(SDL_image EXCLUDE_FROM_ALL)
 
-if (EXISTS "${ASSETS_DIR}")
-    add_custom_command(TARGET ByteRacers POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E rm -rf "$<TARGET_FILE_DIR:ByteRacers>/assets"
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:ByteRacers>/assets"
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${ASSETS_DIR}" "$<TARGET_FILE_DIR:ByteRacers>/assets"
-        COMMENT "Copying assets to output directory"
+# Link Dependencies
+target_link_libraries(${PROJECT_NAME} PUBLIC
+        SDL3_image::SDL3_image
+        SDL3::SDL3
+)
+
+# Grab SDL DLLs
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3>             $<TARGET_FILE_DIR:${PROJECT_NAME}>/
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3_image::SDL3_image> $<TARGET_FILE_DIR:${PROJECT_NAME}>/
+        VERBATIM
+)
+if (TARGET tiff) # not needed right now but may be needed in future
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:tiff> $<TARGET_FILE_DIR:${PROJECT_NAME}>/
+            VERBATIM
     )
-else()
-    message(WARNING "Assets directory not found: ${ASSETS_DIR}")
 endif()
 
+# Grab assets folder utilities
+if (EXISTS "${CMAKE_SOURCE_DIR}/assets")
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/assets"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets"
+            VERBATIM
+    )
+endif()
 
+# Manage name of exe and place in root
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        OUTPUT_NAME "ByteRacers"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)

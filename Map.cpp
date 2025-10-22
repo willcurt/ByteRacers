@@ -1,4 +1,5 @@
 #include "Map.h"
+#include "Camera.h"
 #include <fstream>
 #include <string>
 #include <algorithm>
@@ -96,6 +97,37 @@ void Map::render(SDL_Renderer* r) const
 
                 // Draw border orange
                 SDL_SetRenderDrawColor(r, 255, 165, 0, 255);
+                SDL_RenderRect(r, &fr);
+            }
+        }
+    }
+}
+
+void Map::render(SDL_Renderer* r, const Camera& cam) const
+{
+    // Compute visible tile range
+    int firstCol = std::max(0, int(std::floor(cam.view.x / tile_)));
+    int firstRow = std::max(0, int(std::floor(cam.view.y / tile_)));
+    int lastCol  = std::min(cols_ - 1, int(std::ceil((cam.view.x + cam.view.w) / tile_)));
+    int lastRow  = std::min(rows_ - 1, int(std::ceil((cam.view.y + cam.view.h) / tile_)));
+
+    for (int y = firstRow; y <= lastRow; ++y)
+    {
+        for (int x = firstCol; x <= lastCol; ++x)
+        {
+            if (at(y, x) == 1)
+            {
+                // Subtract camera to draw in screen space
+                SDL_FRect fr{
+                    float(x * tile_) - cam.view.x,
+                    float(y * tile_) - cam.view.y,
+                    float(tile_), float(tile_)
+                };
+
+                SDL_SetRenderDrawColor(r, 0, 255, 0, 255);   // fill green
+                SDL_RenderFillRect(r, &fr);
+
+                SDL_SetRenderDrawColor(r, 255, 165, 0, 255); // border orange
                 SDL_RenderRect(r, &fr);
             }
         }

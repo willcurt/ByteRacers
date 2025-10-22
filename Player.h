@@ -18,6 +18,7 @@ public:
 
     // render the car rotated to its physical heading. ff tex == NULL, draws a placeholder.
     void render(SDL_Renderer* ren, SDL_Texture* tex);
+    void render(SDL_Renderer* ren, SDL_Texture* tex, const Camera& cam);
 
     // accessors / utilities
     void setPosition(float x, float y) { x_ = x; y_ = y; }

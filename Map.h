@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdint>
 #include <string>
+class Camera;
 
 class Map {
 public:
@@ -10,6 +11,7 @@ public:
     Map(const char* const* rowsCStr, int rows, int cols, int tile = 16);
     bool loadFromFile(const std::string& path, int tile, std::string* error = nullptr);
     void render(SDL_Renderer* r) const;
+    void render(SDL_Renderer* r, const Camera& cam) const;
     bool isWallAtPixel(float px, float py) const;
     void setCell(int row, int col, uint8_t v);
     int rows() const { return rows_; }
