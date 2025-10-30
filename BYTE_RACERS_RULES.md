@@ -50,9 +50,55 @@
 
 # Win & Loss Conditions
 
-- Win condition: Collect all flags to finish the level.
+## Win Conditions
 
-- Loss condition: Lose all lives → Game Over.
+The player wins a level by successfully collecting all flags scattered throughout the maze while avoiding enemy cars and managing fuel. When all flags have been collected:
+
+- The level transitions to a "Stage Clear" or "Level Complete" state.
+- Remaining fuel is converted into bonus points (for example, remaining fuel × 10).
+- A summary screen or message is displayed before progressing to the next level.
+- Higher levels may increase maze complexity, the number of flags, or enemy speed.
+
+Optional variations:
+
+- Collecting a Special Flag grants an instant bonus (e.g., +1,000 points) and may automatically award points for all remaining regular flags.
+- Completing a level without using any smoke screens could provide an additional skill bonus.
+
+**Implementation note:** Win detection occurs when the number of collected flags equals the total flags on the map. This check typically occurs inside the main game loop.
+
+## Loss Conditions
+
+The player loses a life when colliding with an enemy car or running out of fuel. Each lost life triggers a short animation before restarting the current level.
+
+The player loses one life when:
+
+- The player car collides with an enemy car.
+- The fuel meter reaches zero.
+
+After losing a life:
+
+- The player respawns at the starting position.
+- Enemies and flags reset to their default positions.
+- Fuel and smoke supplies are replenished for that life.
+- Score and collected flags are not reset unless all lives are lost.
+
+The player reaches Game Over when all three lives are lost. The game transitions to a Game Over screen displaying the final score and options such as "Play Again" or "Main Menu."
+
+Optional extensions:
+
+- A fuel warning indicator (visual or sound) when fuel is low.
+- A checkpoint or continue system in later levels.
+
+**Implementation note:** Loss detection occurs during the update loop. If a collision with an enemy is detected or fuel reaches zero, a life is lost. If all lives are lost, the game state is set to Game Over.
+
+## Gameplay Flow Summary
+
+1. Start Level → Player begins with 3 lives, full fuel, and limited smoke screens.
+2. During Play → Player collects flags, avoids enemies, and manages fuel.
+3. Win Case → All flags collected → Stage Clear → Bonus points → Next Level.
+4. Lose Life → Collision or no fuel → Respawn if lives remain.
+5. Lose Game → All lives lost → Game Over → Display final score.
+
 
 # Planned Features
 
