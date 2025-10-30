@@ -6,6 +6,7 @@
 #include "Player.h"
 #include "Map.h"
 #include "Camera.h"
+#include "EnemyCar.h"
 
 struct SDLState {
     SDL_Window*   window{};
@@ -56,6 +57,12 @@ static SDL_Texture* loadCarTexture(SDL_Renderer* ren) {
     return tex;
 }
 
+static SDL_Texture* loadEnemyTexture(SDL_Renderer* ren) {
+    SDL_Texture* tex = IMG_LoadTexture(ren, "assets/enemy_n.png");
+    if (tex) SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
+    return tex;
+}
+
 int main(int, char**) {
     SDLState s;
 
@@ -63,16 +70,24 @@ int main(int, char**) {
 
     // load car sprite (PNG w/ transparent background, oriented “up”)
     SDL_Texture* carTex = loadCarTexture(s.renderer);
+    SDL_Texture* enemyTex = loadEnemyTexture(s.renderer);
 
     // create  Player in the middle of the current render size
     int rw = s.winW, rh = s.winH;
     if (s.logicalW > 0 && s.logicalH > 0) { rw = s.logicalW; rh = s.logicalH; }
     Player car(float(rw) * 0.5f, float(rh) * 0.5f, -90.f);
 
+    // Create enemies (hardcoded for now)
+    std::vector<EnemyCar> enemies = {
+        EnemyCar(200.f, 200.f),
+        EnemyCar(900.f, 300.f),
+        EnemyCar(400.f, 900.f)
+    };
+
     // Create and load a basic map
     Map map;
     std::string mapErr;
-    if (!map.loadFromFile("levels/levels_camera_test.txt", TILE, &mapErr))
+    if (!map.loadFromFile("levels/level1.txt", TILE, &mapErr))
     {
         // Empty for now
     }
@@ -154,6 +169,10 @@ int main(int, char**) {
 
         map.render(s.renderer, camera);            // only visible tiles, offset by camera
         car.render(s.renderer, carTex, camera);    // draw player relative to camera
+        for (auto& e : enemies)
+            e.update(dt, map, car.x(), car.y());
+        for (auto& e : enemies)
+            e.render(s.renderer, enemyTex, camera);
 
         // simple velocity bar
         float spd = std::abs(car.speed());
