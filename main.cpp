@@ -7,6 +7,7 @@
 #include "Map.h"
 #include "Camera.h"
 #include "EnemyCar.h"
+#include <vector>
 
 struct SDLState {
     SDL_Window*   window{};
@@ -72,6 +73,16 @@ int main(int, char**) {
     SDL_Texture* carTex = loadCarTexture(s.renderer);
     SDL_Texture* enemyTex = loadEnemyTexture(s.renderer);
 
+    static constexpr float kPlayerRadius = 12.0f;
+    static constexpr float kEnemyRadius  = 15.0f;
+
+    auto playerHitEnemy = [&](const Player& p, const EnemyCar& e) -> bool {
+        const float dx = p.x() - e.x();
+        const float dy = p.y() - e.y();
+        const float r  = kPlayerRadius + kEnemyRadius;
+        return (dx*dx + dy*dy) <= (r * r);
+    };
+
     // create  Player in the middle of the current render size
     int rw = s.winW, rh = s.winH;
     if (s.logicalW > 0 && s.logicalH > 0) { rw = s.logicalW; rh = s.logicalH; }
@@ -87,7 +98,7 @@ int main(int, char**) {
     // Create and load a basic map
     Map map;
     std::string mapErr;
-    if (!map.loadFromFile("levels/level1.txt", TILE, &mapErr))
+    if (!map.loadFromFile("levels/levels_camera_test.txt", TILE, &mapErr))
     {
         // Empty for now
     }
@@ -167,10 +178,28 @@ int main(int, char**) {
         SDL_SetRenderDrawColor(s.renderer, 24, 28, 32, 255);
         SDL_RenderClear(s.renderer);
 
-        map.render(s.renderer, camera);            // only visible tiles, offset by camera
-        car.render(s.renderer, carTex, camera);    // draw player relative to camera
         for (auto& e : enemies)
             e.update(dt, map, car.x(), car.y());
+
+        bool collided = false;
+        for (const auto& e : enemies) {
+            if (playerHitEnemy(car, e)) {
+                collided = true;
+                break;
+            }
+        }
+
+        if (collided) {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,
+                                     "Game Over",
+                                     "You were hit by an enemy!",
+                                     s.window);
+            running = false; // end the game loop immediately
+            // (You can also reset here, decrement lives, etc., later.)
+        }
+
+        map.render(s.renderer, camera);            // only visible tiles, offset by camera
+        car.render(s.renderer, carTex, camera);    // draw player relative to camera
         for (auto& e : enemies)
             e.render(s.renderer, enemyTex, camera);
 
